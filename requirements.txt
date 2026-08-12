@@ -1,0 +1,6 @@
+numpy>=1.26
+opencv-python-headless>=4.10
+scikit-image>=0.23
+tqdm>=4.66
+# Install PyTorch separately using the official selector for your GPU/CPU:
+# https://pytorch.org/get-started/locally/
