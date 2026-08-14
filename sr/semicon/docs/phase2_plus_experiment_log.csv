@@ -1,0 +1,7 @@
+run_id,phase,experiment,parent,config,parameters,status,validation_psnr,validation_ssim,validation_lpips,dev_test_psnr,dev_test_ssim,dev_test_lpips,inference_ms_per_image,train_time_seconds,decision,notes
+B2_NAFNET_SR_BASELINE,2,B2,B1_LIGHTWEIGHT_CNN,configs/baseline_nafnet.yaml,108609,PENDING_GPU,,,,,,,,,,Canonical B2 implemented; no authoritative GPU result.
+P1_DEGRADATION_AWARE,3,P1,B2_NAFNET_SR_BASELINE,configs/phase3_p1_degradation_aware.yaml,118561,PENDING_GPU,,,,,,,,,,Degradation-conditioning intervention implemented; GPU experiment pending.
+P2_SYNTHETIC_DEGRADATION,4,P2,P1_DEGRADATION_AWARE,configs/phase4_p2_synthetic_degradation.yaml,118561,PENDING_GPU,,,,,,,,,,Synthetic-degradation intervention implemented; GPU experiment pending.
+P3_EDGE_LOSS,5,P3-E,P2_SYNTHETIC_DEGRADATION,configs/phase5_p3_edge_loss.yaml,118561,PENDING_GPU,,,,,,,,,,Edge-loss ablation implemented; GPU experiment pending.
+P3_SSIM_LOSS,5,P3-S,P2_SYNTHETIC_DEGRADATION,configs/phase5_p3_ssim_loss.yaml,118561,PENDING_GPU,,,,,,,,,,SSIM-loss ablation implemented; GPU experiment pending.
+P3_FREQUENCY_LOSS,5,P3-F,P2_SYNTHETIC_DEGRADATION,configs/phase5_p3_frequency_loss.yaml,118561,PENDING_GPU,,,,,,,,,,Frequency-loss ablation implemented; GPU experiment pending.

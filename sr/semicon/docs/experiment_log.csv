@@ -1,0 +1,4 @@
+run_id,model,loss,augmentation,epochs,parameters,PSNR,SSIM,LPIPS,ms_per_image,checkpoint,decision,notes
+B0_BICUBIC,bicubic,none,none,0,0,23.1308,0.5413,0.4400,2.88,none,KEEP,"Validation metric floor; dev-test: PSNR 22.7117, SSIM 0.5285, LPIPS 0.4419, 2.83 ms/image"
+B1_LIGHTWEIGHT_CNN,lightweight_sr,charbonnier,flip+rot90,3,120833,27.1655,0.7305,0.3280,48.52,checkpoints/baseline_cnn_best.pth,KEEP,"Selected on validation; dev-test (used after selection): PSNR 26.7578, SSIM 0.7060, LPIPS 0.3467, 38.47 ms/image"
+B2_NAFNET_SR_BASELINE,nafnet_sr,charbonnier,flip+rot90,0,108609,,,,43.83,checkpoints/baseline_nafnet_best.pth,PENDING_GPU,"Architecture sanity only; no B2 checkpoint or quality metrics yet. width=32; blocks=8; expansion=2; attention reduction=4; residual scale=0.1; pixel shuffle x2; configured epochs=3; lr=0.001; batch=16; seed=42. CPU synthetic forward timing is preliminary; same-run B1 microbenchmark was 22.64 ms/image."

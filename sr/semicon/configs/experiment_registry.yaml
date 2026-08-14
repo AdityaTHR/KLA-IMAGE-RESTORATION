@@ -1,0 +1,154 @@
+schema_version: 1
+allowed_statuses: [IMPLEMENTED, PENDING_GPU, TRAINING, EVALUATED, KEEP, DROP, BLOCKED]
+canonical_splits:
+  train:
+    path: data/splits/train.txt
+    count: 2560
+  val:
+    path: data/splits/val.txt
+    count: 320
+  dev_test:
+    path: data/splits/dev_test.txt
+    count: 320
+decision_policy:
+  validation_role: checkpoint selection and experiment development
+  dev_test_role: final internal comparison after validation selection
+  keep_rule: Improve at least two quality metrics, or one important metric without meaningful damage, while considering speed and parameters.
+  forbidden: Never use blind-test data for model selection and never assign KEEP or DROP before evaluation.
+
+experiments:
+  - run_id: B0_BICUBIC
+    phase: 1
+    experiment: B0
+    parent: null
+    hypothesis: Bicubic x2 establishes the non-learned metric floor.
+    isolated_change: Non-learned reference.
+    architecture: Bicubic interpolation x2.
+    parameters: 0
+    config: configs/baseline_bicubic.yaml
+    checkpoint: null
+    history: null
+    output_slug: bicubic
+    validation_metrics: outputs/bicubic_val_metrics.json
+    dev_test_metrics: outputs/bicubic_dev_test_metrics.json
+    status: KEEP
+    decision: KEEP
+
+  - run_id: B1_LIGHTWEIGHT_CNN
+    phase: 1
+    experiment: B1
+    parent: B0_BICUBIC
+    hypothesis: A learned residual CNN improves joint denoising and x2 reconstruction over bicubic.
+    isolated_change: Lightweight learned residual CNN.
+    architecture: Four-block 32-channel residual CNN with pixel shuffle x2.
+    parameters: 120833
+    config: configs/baseline_cnn.yaml
+    checkpoint: checkpoints/baseline_cnn_best.pth
+    history: checkpoints/B1_LIGHTWEIGHT_CNN_training_history.csv
+    output_slug: baseline_cnn
+    validation_metrics: outputs/baseline_cnn_val_metrics.json
+    dev_test_metrics: outputs/baseline_cnn_dev_test_metrics.json
+    status: KEEP
+    decision: KEEP
+
+  - run_id: B2_NAFNET_SR_BASELINE
+    phase: 2
+    experiment: B2
+    parent: B1_LIGHTWEIGHT_CNN
+    hypothesis: NAFNet-style restoration blocks improve quality while retaining a compact single-pass model.
+    isolated_change: Replace B1 residual blocks with eight compact NAFNet-style blocks.
+    architecture: Canonical 32-channel eight-block NAFNet-style SR model.
+    parameters: 108609
+    config: configs/baseline_nafnet.yaml
+    checkpoint: checkpoints/baseline_nafnet_best.pth
+    history: checkpoints/B2_NAFNET_SR_BASELINE_training_history.csv
+    output_slug: nafnet_sr
+    validation_metrics: outputs/nafnet_sr_val_metrics.json
+    dev_test_metrics: outputs/nafnet_sr_dev_test_metrics.json
+    status: PENDING_GPU
+    decision: null
+
+  - run_id: P1_DEGRADATION_AWARE
+    phase: 3
+    experiment: P1
+    parent: B2_NAFNET_SR_BASELINE
+    hypothesis: Learned conditioning from raw degraded input improves mixed-degradation restoration.
+    isolated_change: Add a compact degradation encoder and per-block affine modulation.
+    architecture: B2-derived degradation-aware NAFNet-style SR model.
+    parameters: 118561
+    config: configs/phase3_p1_degradation_aware.yaml
+    checkpoint: checkpoints/p1_degradation_aware_best.pth
+    history: checkpoints/P1_DEGRADATION_AWARE_training_history.csv
+    output_slug: p1_degradation_aware
+    validation_metrics: outputs/p1_degradation_aware_val_metrics.json
+    dev_test_metrics: outputs/p1_degradation_aware_dev_test_metrics.json
+    status: PENDING_GPU
+    decision: null
+
+  - run_id: P2_SYNTHETIC_DEGRADATION
+    phase: 4
+    experiment: P2
+    parent: P1_DEGRADATION_AWARE
+    hypothesis: Varied signal-dependent degradations improve robustness and OOD generalization.
+    isolated_change: Add seeded synthetic speckle, Gaussian, order, domain, and downsampling variation.
+    architecture: Same degradation-aware model as P1.
+    parameters: 118561
+    config: configs/phase4_p2_synthetic_degradation.yaml
+    checkpoint: checkpoints/p2_synthetic_degradation_best.pth
+    history: checkpoints/P2_SYNTHETIC_DEGRADATION_training_history.csv
+    output_slug: p2_synthetic_degradation
+    validation_metrics: outputs/p2_synthetic_degradation_val_metrics.json
+    dev_test_metrics: outputs/p2_synthetic_degradation_dev_test_metrics.json
+    status: PENDING_GPU
+    decision: null
+
+  - run_id: P3_EDGE_LOSS
+    phase: 5
+    experiment: P3-E
+    parent: P2_SYNTHETIC_DEGRADATION
+    hypothesis: A small edge-gradient term improves thin-structure preservation.
+    isolated_change: Add edge loss with weight 0.1.
+    architecture: Same degradation-aware model and augmentation as P2.
+    parameters: 118561
+    config: configs/phase5_p3_edge_loss.yaml
+    checkpoint: checkpoints/p3_edge_loss_best.pth
+    history: checkpoints/P3_EDGE_LOSS_training_history.csv
+    output_slug: p3_edge_loss
+    validation_metrics: outputs/p3_edge_loss_val_metrics.json
+    dev_test_metrics: outputs/p3_edge_loss_dev_test_metrics.json
+    status: PENDING_GPU
+    decision: null
+
+  - run_id: P3_SSIM_LOSS
+    phase: 5
+    experiment: P3-S
+    parent: P2_SYNTHETIC_DEGRADATION
+    hypothesis: A small SSIM term improves local structural fidelity.
+    isolated_change: Add differentiable SSIM loss with weight 0.1.
+    architecture: Same degradation-aware model and augmentation as P2.
+    parameters: 118561
+    config: configs/phase5_p3_ssim_loss.yaml
+    checkpoint: checkpoints/p3_ssim_loss_best.pth
+    history: checkpoints/P3_SSIM_LOSS_training_history.csv
+    output_slug: p3_ssim_loss
+    validation_metrics: outputs/p3_ssim_loss_val_metrics.json
+    dev_test_metrics: outputs/p3_ssim_loss_dev_test_metrics.json
+    status: PENDING_GPU
+    decision: null
+
+  - run_id: P3_FREQUENCY_LOSS
+    phase: 5
+    experiment: P3-F
+    parent: P2_SYNTHETIC_DEGRADATION
+    hypothesis: A small Fourier-domain term improves high-frequency reconstruction fidelity.
+    isolated_change: Add frequency loss with weight 0.05.
+    architecture: Same degradation-aware model and augmentation as P2.
+    parameters: 118561
+    config: configs/phase5_p3_frequency_loss.yaml
+    checkpoint: checkpoints/p3_frequency_loss_best.pth
+    history: checkpoints/P3_FREQUENCY_LOSS_training_history.csv
+    output_slug: p3_frequency_loss
+    validation_metrics: outputs/p3_frequency_loss_val_metrics.json
+    dev_test_metrics: outputs/p3_frequency_loss_dev_test_metrics.json
+    status: PENDING_GPU
+    decision: null
