@@ -1,0 +1,42 @@
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local environments and secrets
+.venv/
+venv/
+.env
+.env.*
+
+# Notebook and editor state
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Unrelated local workspace
+qr-doc-app/
+
+# Operating-system clutter
+.DS_Store
+Thumbs.db
+
+# Dataset files are large and should use shared storage, DVC, or Git LFS.
+# Split manifests remain versionable under data/splits/.
+data/raw_archives/
+data/extracted/
+
+# Checkpoints, metric summaries, and Phase 1 outputs are intentionally not
+# ignored; the team can choose normal Git or Git LFS for those artifacts.
+# Generated training/evaluation artifacts
+outputs/
+checkpoints/*.pth
+checkpoints/archive/

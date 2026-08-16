@@ -1,0 +1,80 @@
+# P3-S: P2 plus a structural-similarity objective.
+run_id: P3_SSIM_LOSS
+
+experiment:
+  phase: 5
+  parent: P2_SYNTHETIC_DEGRADATION
+  hypothesis: A small differentiable SSIM term improves local structural fidelity.
+  isolated_change: Add ssim_weight=0.1 to the Charbonnier objective.
+  status: PENDING_GPU
+
+model:
+  name: degradation_aware_nafnet_sr
+  in_channels: 1
+  out_channels: 1
+  feature_width: 32
+  num_blocks: 8
+  expansion_factor: 2
+  attention_reduction_factor: 4
+  residual_scale: 0.1
+  layer_norm_eps: 0.000001
+  upsampling_method: pixelshuffle
+  degradation_hidden_channels: 8
+  degradation_descriptor_channels: 16
+  modulation_scale: 0.1
+
+data:
+  noisy_dir: data/extracted/train/NoisyLR
+  gt_dir: data/extracted/train/GT
+  test_dir: data/extracted/test/NoisyLR
+  splits_dir: data/splits
+  train_split: data/splits/train.txt
+  val_split: data/splits/val.txt
+  dev_test_split: data/splits/dev_test.txt
+
+training:
+  seed: 42
+  epochs: 3
+  batch_size: 16
+  num_workers: 0
+  augment: true
+  synthetic_degradation:
+    probability: 0.5
+    gaussian_sigma: [0.0, 0.08]
+    speckle_sigma: [0.0, 0.18]
+    interpolation_modes: [area, bilinear, bicubic]
+    high_resolution_noise_probability: 0.5
+  optimizer:
+    name: adam
+    lr: 0.001
+    weight_decay: 0.0
+    betas: [0.9, 0.999]
+  scheduler:
+    name: cosine
+    T_max: 3
+    eta_min: 0.0001
+  loss:
+    name: composite
+    epsilon: 0.001
+    pixel_weight: 1.0
+    edge_weight: 0.0
+    ssim_weight: 0.1
+    frequency_weight: 0.0
+    ssim_window_size: 11
+  amp: true
+  gradient_clip: 1.0
+
+checkpoint:
+  dir: checkpoints
+  path: checkpoints/p3_ssim_loss_best.pth
+  save_every: 1
+  filename: p3_ssim_loss
+  best_filename: p3_ssim_loss_best.pth
+
+evaluation:
+  output_dir: outputs/p3_ssim_loss
+  save_images: true
+  metrics: [psnr, ssim, lpips]
+
+logging:
+  experiment_log: docs/phase2_plus_experiment_log.csv
