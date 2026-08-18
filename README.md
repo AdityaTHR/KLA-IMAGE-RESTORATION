@@ -1,91 +1,84 @@
-# KLA PS01 - Image Restoration Starter
+# NOISE_IC_NONE
+## KLA Semiconductor Image Restoration
 
-A clean first baseline for the SemiCon AI Hackathon KLA image-restoration problem.
+AI-based restoration of degraded grayscale images affected by Gaussian noise,
+speckle noise and 2x downsampling.
 
-## 1. Ubuntu setup
+## Method
 
-```bash
-sudo apt update
-sudo apt install -y python3-venv unzip git
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-```
+The submitted system uses a lightweight degradation-aware NAF-based
+super-resolution model followed by conservative measurement-derived
+high-frequency detail fusion.
 
-Install PyTorch using the official Linux/Pip selector for your machine: https://pytorch.org/get-started/locally/
-Then:
+The detail fusion coefficient is fixed at beta = 0.04.
 
-```bash
-pip install -r requirements.txt
-python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
-```
+No external API, internet access, user interaction, or model download
+is required during inference.
 
-## 2. Put the data here
+## Input
 
-Expected extracted layout:
+A directory containing `.npy` grayscale degraded images.
 
-```text
-data/train/
-  GT/000000.npy
-  NoisyLR/000000.npy
-```
+Expected standard task resolution:
 
-If you have `train.zip`:
+    128 x 128
 
-```bash
-unzip train.zip -d data/
-# This normally creates data/train/GT and data/train/NoisyLR
-```
+Input values are intentionally NOT clipped before inference.
 
-## 3. Verify data before training
+## Output
 
-```bash
-python scripts/audit_data.py --data-root data/train
-```
+For every input `.npy` file, the program creates one restored `.npy`
+file with the identical filename.
 
-Expected key facts for the provided dataset: 3200 pairs, LR 128x128, GT 256x256, float32, and some LR pixels outside [0,1].
+Expected output resolution:
 
-## 4. Run non-learning baseline
+    256 x 256
 
-```bash
-python scripts/bicubic_baseline.py --data-root data/train
-```
+Output arrays are:
 
-Reference result measured on all 3200 provided pairs (bicubic + output clipping): about 22.853 dB PSNR and 0.5361 SSIM.
+- grayscale
+- float32
+- finite
+- clipped to [0,1]
 
-## 5. Smoke-test the neural baseline
+## Installation
 
-```bash
-python scripts/smoke_test.py
-```
+Python 3 with CUDA-capable PyTorch is recommended.
 
-## 6. Train first learned baseline
+Install dependencies:
 
-Quick test:
+    pip install -r requirements.txt
 
-```bash
-python train_baseline.py --data-root data/train --epochs 1 --batch-size 4 --workers 2
-```
+## Execution
 
-Normal first run on a GPU:
+From this directory:
 
-```bash
-python train_baseline.py --data-root data/train --epochs 30 --batch-size 16 --workers 4
-```
+    python run.py <input-dir> <output-dir>
 
-Best checkpoint is saved to `checkpoints/baseline_best.pt`.
+Example:
 
-## 7. Run inference
+    python run.py /path/to/NoisyLR /path/to/restored
 
-Extract test data so `.npy` files are in a folder, for example `data/test/NoisyLR/`, then:
+The output directory is created automatically.
 
-```bash
-python evaluate.py \
-  --input data/test/NoisyLR \
-  --output outputs/restored \
-  --weights checkpoints/baseline_best.pt
-```
+## GPU
 
-## 8. Why this baseline exists
+If CUDA is available, the solution automatically uses the NVIDIA GPU.
 
-Do not try to win with this small model. It is a controlled learned baseline. Once it is proven end-to-end, compare stronger NAFNet/SwinIR-style and degradation-aware variants against it without breaking the evaluation pipeline.
+No manual source-code modification is required.
+
+## Files
+
+    run.py
+    requirements.txt
+    README.md
+    models/
+    src/
+
+`models/` contains the trained model weights and configuration required
+for offline inference.
+
+## Reproducibility
+
+Inference uses a fixed trained checkpoint and deterministic fixed
+post-processing coefficient. No stochastic test-time augmentation is used.

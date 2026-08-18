@@ -1,8 +1,31 @@
-.venv/
+# Python / environments
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+.vscode/
 .DS_Store
-data/
-checkpoints/*.pt
-outputs/*
-!outputs/.gitkeep
+
+# Raw/local datasets
+data/raw/
+data/extracted/
+data/**/*.npy
+
+# Local experiments and generated outputs
+experiments/
+outputs/
+checkpoints/
+
+# Archives
+*.zip
+*.7z
+
+# Checkpoints - only deploy final model
+*.pth
+*.pt
+!models/final_model.pth
+
+# Dataset extraction junk
+data/train/
+**/__MACOSX/
+.DS_Store

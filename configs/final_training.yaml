@@ -1,0 +1,71 @@
+run_id: P1_SSIM_W48_B10
+experiment:
+  phase: 7
+  parent: P1_SSIM_CLEAN
+  hypothesis: Increasing feature capacity improves joint denoising and x2 reconstruction.
+  isolated_change: "Increase width 32\u219248 and blocks 8\u219210."
+  status: PENDING_GPU
+model:
+  name: degradation_aware_nafnet_sr
+  in_channels: 1
+  out_channels: 1
+  feature_width: 48
+  num_blocks: 10
+  expansion_factor: 2
+  attention_reduction_factor: 4
+  residual_scale: 0.1
+  layer_norm_eps: 1.0e-06
+  upsampling_method: pixelshuffle
+  degradation_hidden_channels: 8
+  degradation_descriptor_channels: 16
+  modulation_scale: 0.1
+data:
+  noisy_dir: data/extracted/train/NoisyLR
+  gt_dir: data/extracted/train/GT
+  test_dir: data/extracted/test/NoisyLR
+  splits_dir: data/splits
+  train_split: data/splits/train.txt
+  val_split: data/splits/val.txt
+  dev_test_split: data/splits/dev_test.txt
+training:
+  seed: 42
+  epochs: 30
+  batch_size: 16
+  num_workers: 4
+  augment: true
+  optimizer:
+    name: adam
+    lr: 0.001
+    weight_decay: 0.0
+    betas:
+    - 0.9
+    - 0.999
+  scheduler:
+    name: cosine
+    T_max: 30
+    eta_min: 0.0001
+  loss:
+    name: composite
+    epsilon: 0.001
+    pixel_weight: 1.0
+    edge_weight: 0.0
+    ssim_weight: 0.05
+    frequency_weight: 0.0
+    ssim_window_size: 11
+  amp: true
+  gradient_clip: 1.0
+checkpoint:
+  dir: checkpoints
+  path: checkpoints/p1_ssim_w48_b10_best.pth
+  save_every: 1
+  filename: p1_ssim_w48_b10
+  best_filename: p1_ssim_w48_b10_best.pth
+evaluation:
+  output_dir: outputs/p1_ssim_w48_b10
+  save_images: true
+  metrics:
+  - psnr
+  - ssim
+  - lpips
+logging:
+  experiment_log: docs/phase2_plus_experiment_log.csv
